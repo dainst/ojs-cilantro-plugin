@@ -66,6 +66,19 @@ class cilantroConnectionApi extends server {
         return $parser->parseText($xml);
     }
 
+    private function _getFrontmatterPlugin() {
+        import('classes.core.PageRouter');
+        $application =& PKPApplication::getApplication();
+        $request = $application->getRequest();
+
+        $router = new PageRouter();
+        $router->setApplication($application);
+        $request->setRouter($router);
+
+        PluginRegistry::loadCategory('generic', false, CONTEXT_ID_NONE);
+        return PluginRegistry::getPlugin('generic', 'dfm');
+    }
+
     private function _getNativeImportExportPlugin() {
         PluginRegistry::loadCategory('importexport', true, 0);
         $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
@@ -229,8 +242,47 @@ class cilantroConnectionApi extends server {
         return $user;
     }
 
-    function createFrontmatters() {
-        // create frontmatters & thumbnails
+    function _importDfmLog($dfm) {
+        foreach ($dfm->logger->log as $entry) {
+            if ($entry->type == "info") {
+                $this->log->log($entry->text);
+            }
+        }
+    }
+
+    function frontmatters() {
+
+        $dfm = $this->_getFrontmatterPlugin();
+        $dfm->loadDfm();
+
+        $command = $this->data["/"][0];
+        $this->log->debug("command: ", $command);
+        if (!in_array($command, array("replace", "create"))) {
+            throw new Exception("Frontmatter Creator Command >>$command<< unknown");
+        }
+        $dfm->settings->doFrontmatters = $command;
+
+        $type = $this->data["/"][1];
+        $this->log->debug("id-type: ", $type);
+        if (!in_array($type, \dfm\processor::supportedTypes)) {
+            throw new Exception("Frontmatter Creator Id-Type >>$type<< unknown");
+        }
+
+        $idlist = isset($this->data['id']) ? explode(',', $this->data['id']) : false;
+        if (!$idlist or !count($idlist)) {
+            throw new Exception("nothing to do. provide at least one Id is in >>id<<-Parameter");
+        }
+
+        $dfm->startUpdateFrontpages($idlist, $type, false);
+        $this->_importDfmLog($dfm);
+
+
+
+//        $plugin->settings->doFrontmatters = in_array($this->command, array('update', 'replace')) ? 'replace' : $plugin->settings->doFrontmatters;
+//        $plugin->settings->doFrontmatters = in_array($this->command, array('add', 'create')) ? 'create' : $plugin->settings->doFrontmatters;
+//        $plugin->settings->doThumbnails = $this->thumbnails;
+//        $plugin->settings->checkPermission = false; //!
+
     }
 
     function finish() {
