@@ -87,12 +87,14 @@ class cilantroConnectionApi extends server {
         return $user;
     }
 
-    private function _getJournal($journalPath = "yo") {
+    private function _getJournal($journalPath) {
         $journalDao =& DAORegistry::getDAO('JournalDAO');
         $journal = $journalDao->getJournalByPath($journalPath);
         if (is_null($journal)) {
+            $this->returnCode = 404;
             throw new Exception("Journal $journalPath not found");
         }
+        $this->log->debug("got journal " . $journal->getLocalizedTitle() . " ($journalPath)");
         return $journal;
     }
 
@@ -102,12 +104,12 @@ class cilantroConnectionApi extends server {
         }
     }
 
-    private function _runImport($xml) {
+    private function _runImport($xml, $journalCode) {
 
         $nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
 
         $context = array(
-            'journal' => $this->_getJournal(),
+            'journal' => $this->_getJournal($journalCode),
             'user' => $this->_getOJSUser()
         );
 
@@ -131,6 +133,7 @@ class cilantroConnectionApi extends server {
 
 
     public function journalInfo() {
+        $this->return['data'] = array();
         $sql = "select
 				journals.journal_id,
 				path as journal_key,
@@ -143,18 +146,18 @@ class cilantroConnectionApi extends server {
 			order by
 				path;";
         foreach ($this->_querySql($sql) as $row) {
-            $this->return[$row['key']] = $row;
+            $this->return['data'][$row['key']] = $row;
         }
     }
 
-    function upload() {
+    function import() {
         // get xml
-        $xml = $this->_checkXml($this->data);
+        $xml = $this->_checkXml($this->data["%"]);
+        $journalCode = $this->data["/"][0];
 
         // import
-        $journalCode = "test";
         $user = "admin";
-        $nativeImportExportPlugin = $this->_runImport($xml);
+        $nativeImportExportPlugin = $this->_runImport($xml, $journalCode);
 
 
         //la,la,la,la
