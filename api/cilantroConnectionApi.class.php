@@ -120,6 +120,20 @@ class cilantroConnectionApi extends server {
         return array_intersect($roles, $allowed);
     }
 
+    private function _getIssuesArticleIds($issueId) {
+        $publishedArticleDAO =& DAORegistry::getDAO('PublishedArticleDAO');
+        $publishedArticles = $publishedArticleDAO->getPublishedArticles($issueId);
+        return $this->_getObjectIdsFromList($publishedArticles);
+    }
+
+    private function _getObjectIdsFromList($list) {
+        $ids = array();
+        foreach ($list as $record) {
+            $ids[] = $record->getId();
+        }
+        return $ids;
+    }
+
     private function _runImport($xml, $journalCode) {
 
         $nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
@@ -140,6 +154,11 @@ class cilantroConnectionApi extends server {
 
         $doc = $this->_parseXml($xml);
 
+        if ($doc->name !== "issues") {
+            $this->returnCode = 401;
+            throw new Exception("The OJS-Cilantro-Plugin only supports import.xml's with the root node <issues> and it's <{$doc->name}>.");
+        }
+
         $errors = array();
         $issues = array();
         $articles = array();
@@ -149,6 +168,12 @@ class cilantroConnectionApi extends server {
         if (!$nativeImportExportPlugin->handleImport($context, $doc, $errors, $issues, $articles, false)) {
             $this->_importErrors($errors);
             throw new Exception("Import Failed.");
+        }
+
+        $this->return['published_articles'] = $this->_getObjectIdsFromList($articles);
+        $this->return['published_issues'] = $this->_getObjectIdsFromList($issues);
+        foreach ($issues as $issue) {
+            $this->return['published_articles'] = array_merge($this->return['published_articles'], $this->_getIssuesArticleIds($issue->getId()));
         }
 
         $this->log->debug("Import Successfull!");
@@ -176,7 +201,7 @@ class cilantroConnectionApi extends server {
         $xml = $this->_checkXml($this->data["%"]);
         $journalCode = $this->data["/"][0];
         $user = "admin";
-        $nativeImportExportPlugin = $this->_runImport($xml, $journalCode);
+        $this->_runImport($xml, $journalCode);
     }
 
     function login() {
