@@ -43,20 +43,92 @@ class cilantroConnectionApi extends server {
     private function _querySql($sql) {
         $articleDao = DAORegistry::getDAO('ArticleDAO');
         $records = $articleDao->retrieve($sql);
-        $result = new DAOResultFactory($records, $this, '_dummy');
+        $result = new DAOResultFactory($records, $this, '_convertSqlResultRow');
         return $result->toArray();
     }
 
-    /**
-     * needed by DAOResultFactory above
-     */
-    function _dummy($row) {
+    function _convertSqlResultRow($row) {
         return array(
             "id" => $row['journal_id'],
             "key" => $row['journal_key'],
             "locales" => unserialize($row["setting_value"])
         );
     }
+
+    private function _checkXml($xml) {
+        $test = new SimpleXMLElement($xml);
+        $this->log->debug("XML integrity check passed");
+        return $xml;
+    }
+
+    private function _parseXml($xml) {
+        $parser = new XMLParser();
+        return $parser->parseText($xml);
+    }
+
+    private function _getNativeImportExportPlugin() {
+        PluginRegistry::loadCategory('importexport', true, 0);
+        $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
+        return $nativeImportExportPlugin;
+    }
+
+    private function _saveToTempFile($data) {
+        $fileName = "/tmp/" + md5(rand() + date());
+        file_put_contents($fileName);
+        return $fileName;
+    }
+
+    private function _getOJSUser($userId = 1) {
+        $userDao =& DAORegistry::getDAO('UserDAO');
+        $user = $userDao->getById($userId);
+        if (is_null($user)) {
+            throw new Exception("User $userId not found");
+        }
+        return $user;
+    }
+
+    private function _getJournal($journalPath = "yo") {
+        $journalDao =& DAORegistry::getDAO('JournalDAO');
+        $journal = $journalDao->getJournalByPath($journalPath);
+        if (is_null($journal)) {
+            throw new Exception("Journal $journalPath not found");
+        }
+        return $journal;
+    }
+
+    private function _importErrors($errors) {
+        foreach ($errors as $error) {
+            $this->log->warning($error[0]);
+        }
+    }
+
+    private function _runImport($xml) {
+
+        $nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
+
+        $context = array(
+            'journal' => $this->_getJournal(),
+            'user' => $this->_getOJSUser()
+        );
+
+        $doc = $this->_parseXml($xml);
+
+        $errors = array();
+        $issues = array();
+        $articles = array();
+
+        @set_time_limit(0);
+
+        if (!$nativeImportExportPlugin->handleImport($context, $doc, $errors, $issues, $articles, false)) {
+            $this->_importErrors($errors);
+            throw new Exception("Import Failed.");
+        }
+
+        $this->log->debug("Import Successfull!");
+    }
+
+
+
 
     public function journalInfo() {
         $sql = "select
@@ -73,6 +145,31 @@ class cilantroConnectionApi extends server {
         foreach ($this->_querySql($sql) as $row) {
             $this->return[$row['key']] = $row;
         }
+    }
+
+    function upload() {
+        // get xml
+        $xml = $this->_checkXml($this->data);
+
+        // import
+        $journalCode = "test";
+        $user = "admin";
+        $nativeImportExportPlugin = $this->_runImport($xml);
+
+
+        //la,la,la,la
+
+    }
+
+
+
+
+
+
+    function createFrontmatters() {
+
+        // create frontmatters & thumbnails
+
     }
 
     function finish() {

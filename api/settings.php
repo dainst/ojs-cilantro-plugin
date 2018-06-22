@@ -5,5 +5,5 @@ $allowedIps		    = array();
 $allowedSets 		= array('ANGULAR_POST', 'POST', 'GET');
 $serverclass 		= 'cilantroConnectionApi';
 $settings = array();
-$plainOutput        = true;
+$plainOutput        = false;
 ?>
