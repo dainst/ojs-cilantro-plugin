@@ -104,13 +104,38 @@ class cilantroConnectionApi extends server {
         }
     }
 
+    private function _getRoles($user, $journal) {
+        $roleDao = DAORegistry::getDAO('RoleDAO');
+        $roles = array();
+        foreach ($roleDao->getRolesByUserId($user->getId(), $journal->getId()) as $role) {
+            $roles[] = $role->getRoleId();
+        }
+        return $roles;
+    }
+
+    private function _isAllowedToUpload($user, $journal) {
+        $roles = $this->_getRoles($user, $journal);
+        $this->log->debug("userroles: " . implode(", ", $roles));
+        $allowed = array(ROLE_ID_SITE_ADMIN, ROLE_ID_JOURNAL_MANAGER, ROLE_ID_EDITOR);
+        return array_intersect($roles, $allowed);
+    }
+
     private function _runImport($xml, $journalCode) {
 
         $nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
 
+        $journal = $this->_getJournal($journalCode);
+        $user = $this->login();
+
+        if (!$this->_isAllowedToUpload($user, $journal)) {
+            $this->returnCode = 401;
+            throw new Exception("The user >>" . $user->getUsername() . "<< is not allowed to upload to >>" . $journalCode .
+            "<<. He must have the role >>editor<< or >>manager<< for this journal.");
+        }
+
         $context = array(
-            'journal' => $this->_getJournal($journalCode),
-            'user' => $this->_getOJSUser()
+            'journal' => $journal,
+            'user' => $user
         );
 
         $doc = $this->_parseXml($xml);
@@ -128,9 +153,6 @@ class cilantroConnectionApi extends server {
 
         $this->log->debug("Import Successfull!");
     }
-
-
-
 
     public function journalInfo() {
         $this->return['data'] = array();
@@ -151,28 +173,39 @@ class cilantroConnectionApi extends server {
     }
 
     function import() {
-        // get xml
         $xml = $this->_checkXml($this->data["%"]);
         $journalCode = $this->data["/"][0];
-
-        // import
         $user = "admin";
         $nativeImportExportPlugin = $this->_runImport($xml, $journalCode);
-
-
-        //la,la,la,la
-
     }
 
+    function login() {
+        $this->returnCode = 401;
+        if (!isset($_SERVER[HTTP_OJSAUTHORIZATION])) {
+            throw new Exception("no login credentials given");
+        }
+        $credentials = explode(":", $_SERVER[HTTP_OJSAUTHORIZATION]);
+        if (count($credentials) != 2) {
+            throw new Exception("login credentials not ok");
+        }
 
+        $username = base64_decode($credentials[0]);
+        $password = base64_decode($credentials[1]);
 
+        $this->log->debug("credentials: $username : password");
 
+        $user = Validation::login($username, $password, $reason, false);
 
+        if (!$user) {
+            throw new Exception("Could not login with $username. $reason");
+        }
+
+        $this->returnCode = 200;
+        return $user;
+    }
 
     function createFrontmatters() {
-
         // create frontmatters & thumbnails
-
     }
 
     function finish() {
