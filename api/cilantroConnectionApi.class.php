@@ -244,26 +244,29 @@ class cilantroConnectionApi extends server {
 
     function _importDfmLog($dfm) {
         foreach ($dfm->logger->log as $entry) {
-            if ($entry->type == "info") {
-                $this->log->log($entry->text);
+            if (in_array($entry->type, array("warning", "danger", "error"))) {
+                $this->log->warnings[] = $entry->text;
             }
+            $this->log->log("[{$entry->type}] {$entry->text}");
         }
     }
 
     function frontmatters() {
+        $user = $this->login();
 
         $dfm = $this->_getFrontmatterPlugin();
         $dfm->loadDfm();
 
         $command = $this->data["/"][0];
-        $this->log->debug("command: ", $command);
+        $this->log->debug("command:  $command");
         if (!in_array($command, array("replace", "create"))) {
             throw new Exception("Frontmatter Creator Command >>$command<< unknown");
         }
+
         $dfm->settings->doFrontmatters = $command;
 
         $type = $this->data["/"][1];
-        $this->log->debug("id-type: ", $type);
+        $this->log->debug("id-type: $type");
         if (!in_array($type, \dfm\processor::supportedTypes)) {
             throw new Exception("Frontmatter Creator Id-Type >>$type<< unknown");
         }
