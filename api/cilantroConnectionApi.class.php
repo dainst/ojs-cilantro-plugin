@@ -178,7 +178,7 @@ class cilantroConnectionApi extends server {
 
         @set_time_limit(0);
 
-        if (!$nativeImportExportPlugin->handleImport($context, $doc, $errors, $issues, $articles, false)) {
+        if (!$nativeImportExportPlugin->handleImport($context, $doc, $errors, $issues, $articles, true)) {
             $this->_importErrors($errors);
             throw new Exception("Import Failed.");
         }
