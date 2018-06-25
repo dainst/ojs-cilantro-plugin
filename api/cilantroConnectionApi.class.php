@@ -113,7 +113,7 @@ class cilantroConnectionApi extends server {
 
     private function _importErrors($errors) {
         foreach ($errors as $error) {
-            $this->log->warning($error[0]);
+            $this->log->warning(PKPLocale::translate($error[0]));
         }
     }
 

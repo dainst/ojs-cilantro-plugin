@@ -1,5 +1,5 @@
 <?php
-$debugmode 		    = true;
+$debugmode 		    = false;
 $errorReporting 	= true;
 $allowedIps		    = array();
 $allowedSets 		= array('ANGULAR_POST', 'POST', 'GET', 'URL');
