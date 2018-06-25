@@ -243,6 +243,7 @@ class cilantroConnectionApi extends server {
     }
 
     function _importDfmLog($dfm) {
+        $danger = false;
         foreach ($dfm->logger->log as $entry) {
             if (in_array($entry->type, array("warning", "danger", "error"))) {
                 $this->log->warnings[] = $entry->text;
@@ -276,15 +277,14 @@ class cilantroConnectionApi extends server {
             throw new Exception("nothing to do. provide at least one Id is in >>id<<-Parameter");
         }
 
-        $dfm->startUpdateFrontpages($idlist, $type, false);
+        $plugin->settings->doThumbnails = isset($this->data['thumbnails']) ? !!$this->data['thumbnails'] : false;
+
+        $success = $dfm->startUpdateFrontpages($idlist, $type, false);
         $this->_importDfmLog($dfm);
+        if (!$success) {
+            throw new Exception("Frontmatter creation did not succeed.");
+        }
 
-
-
-//        $plugin->settings->doFrontmatters = in_array($this->command, array('update', 'replace')) ? 'replace' : $plugin->settings->doFrontmatters;
-//        $plugin->settings->doFrontmatters = in_array($this->command, array('add', 'create')) ? 'create' : $plugin->settings->doFrontmatters;
-//        $plugin->settings->doThumbnails = $this->thumbnails;
-//        $plugin->settings->checkPermission = false; //!
 
     }
 
