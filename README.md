@@ -6,7 +6,7 @@ Stellt eine einfach Web-API für OJS2 zur Verfügung für diejenigen Funktionen,
 
 Every URL starts with /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/
 
-## Authirzation
+## Authorzation
 
 You need a HTTP-Header called "ojsAuthorization",
 containg OJS-User and Password in the form
@@ -17,7 +17,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 
 ## Endpoints
 
-###journalInfo
+### journalInfo
 
    Gives back basic information about present journals as needed by Salvia.
    
@@ -78,7 +78,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
     /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/journalInfo
   ```
   
-###login
+### login
   
      Can be used to test login credentials. Does nothing excpet for login.
      
@@ -132,7 +132,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
       /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/login
     ```
     
-###import
+### import
   
      Can be used to test login credentials. Does nothing excpet for login.
      
@@ -198,7 +198,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
       /ojs-backup/plugins/generic/import/aa
     ```
     
-###frontmatters
+### frontmatters
 
    Creates or Updates Frontmatters of PDF-Galleys (Representations) in the OJS.
    
