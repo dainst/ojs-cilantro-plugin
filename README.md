@@ -4,7 +4,7 @@ Stellt eine einfach Web-API für OJS2 zur Verfügung für diejenigen Funktionen,
 
 # API
 
-Every URL starts with /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/
+Every URL starts with /<ojs-url>/plugins/generic/ojs-cilantro-plugin/api/
 
 ## Authorzation
 
