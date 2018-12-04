@@ -222,7 +222,7 @@ class cilantroConnectionApi extends server {
                     "path" => $row['key'],
                 );
             }
-            $row[$row['setting_name']] =  $row['setting_value'];
+            $this->return['data'][$row['key']][$row['setting_name']] = $row['setting_value'];
         }
     }
 
