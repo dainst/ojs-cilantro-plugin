@@ -197,16 +197,23 @@ class cilantroConnectionApi extends server {
         $sql = "select
 				journals.journal_id,
 				path as journal_key,
+				setting_name,
 				setting_value
 			 from
 			 	journals
 				left join journal_settings on journals.journal_id = journal_settings.journal_id
 			where
-				setting_name = 'supportedLocales'
+				setting_name in ('supportedLocales', 'title')
 			order by
 				path;";
         foreach ($this->_querySql($sql) as $row) {
-            $this->return['data'][$row['key']] = $row;
+            if (!isset($this->return['data'][$row['key']])) {
+                $this->return['data'][$row['key']] = array(
+                    "id" => $row['id'],
+                    "path" => $row['path'],
+                );
+            }
+            $row[$row['setting_name']] =  $row['setting_value'];
         }
     }
 
