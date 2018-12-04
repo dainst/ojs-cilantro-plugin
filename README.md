@@ -1,6 +1,14 @@
 # ojs-cilantro-plugin
 
-Stellt eine einfach Web-API für OJS2 zur Verfügung für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
+Stellt eine einfache Web-API für OJS2 zur Verfügung für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
+
+# Installation
+
+* got to <ojs>/plugins/generic
+* git clone <this>
+* cd <this>
+* git submodule init
+* git submodule update
 
 # API
 
