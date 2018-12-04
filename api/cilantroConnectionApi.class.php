@@ -210,7 +210,7 @@ class cilantroConnectionApi extends server {
             if (!isset($this->return['data'][$row['key']])) {
                 $this->return['data'][$row['key']] = array(
                     "id" => $row['id'],
-                    "path" => $row['path'],
+                    "path" => $row['journal_key'],
                 );
             }
             $row[$row['setting_name']] =  $row['setting_value'];
