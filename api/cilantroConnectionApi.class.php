@@ -48,10 +48,16 @@ class cilantroConnectionApi extends server {
     }
 
     function _convertSqlResultRow($row) {
+
+        $value = @unserialize($row["setting_value"]);
+        if ($value === false) {
+            $value = $row["setting_value"];
+        }
+
         return array(
             "id" => $row['journal_id'],
             "key" => $row['journal_key'],
-            "setting_value" => unserialize($row["setting_value"]),
+            "setting_value" => $value,
             "setting_name" => $row['setting_name']
         );
     }
