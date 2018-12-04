@@ -214,8 +214,6 @@ class cilantroConnectionApi extends server {
 			order by
 				path;";
         foreach ($this->_querySql($sql) as $row) {
-            $this->log->warning(print_r($row,1));
-
             if (!isset($this->return['data'][$row['key']])) {
                 $this->return['data'][$row['key']] = array(
                     "id" => $row['id'],
