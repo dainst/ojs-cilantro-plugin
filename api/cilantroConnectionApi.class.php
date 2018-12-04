@@ -51,7 +51,8 @@ class cilantroConnectionApi extends server {
         return array(
             "id" => $row['journal_id'],
             "key" => $row['journal_key'],
-            "locales" => unserialize($row["setting_value"])
+            "setting_value" => unserialize($row["setting_value"]),
+            "setting_name" => $row['setting_name']
         );
     }
 
@@ -207,10 +208,12 @@ class cilantroConnectionApi extends server {
 			order by
 				path;";
         foreach ($this->_querySql($sql) as $row) {
+            $this->log->warning(print_r($row,1));
+
             if (!isset($this->return['data'][$row['key']])) {
                 $this->return['data'][$row['key']] = array(
                     "id" => $row['id'],
-                    "path" => $row['journal_key'],
+                    "path" => $row['key'],
                 );
             }
             $row[$row['setting_name']] =  $row['setting_value'];
