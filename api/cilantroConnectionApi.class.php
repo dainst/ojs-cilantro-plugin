@@ -1,5 +1,4 @@
 <?php
-
 class cilantroConnectionApi extends server {
 
     private $_ojsUser;
@@ -185,16 +184,24 @@ class cilantroConnectionApi extends server {
 
         @set_time_limit(0);
 
+        // catch DB-errors
+        define("DONT_DIE_ON_ERROR", true);
+        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+            throw new Exception("Import Failed: " . $errstr);
+        }, E_ALL & ~E_DEPRECATED & ~E_STRICT);
+
         if (!$nativeImportExportPlugin->handleImport($context, $doc, $errors, $issues, $articles, true)) {
             $this->_importErrors($errors);
             throw new Exception("Import Failed.");
         }
-
+        
         $this->return['published_articles'] = $this->_getObjectIdsFromList($articles);
         $this->return['published_issues'] = $this->_getObjectIdsFromList($issues);
         foreach ($issues as $issue) {
             $this->return['published_articles'] = array_merge($this->return['published_articles'], $this->_getIssuesArticleIds($issue->getId()));
         }
+
+        restore_error_handler();
 
         $this->log->debug("Import Successfull!");
     }
@@ -233,10 +240,10 @@ class cilantroConnectionApi extends server {
 
     function login() {
         $this->returnCode = 401;
-        if (!isset($_SERVER[HTTP_OJSAUTHORIZATION])) {
+        if (!isset($_SERVER["HTTP_OJSAUTHORIZATION"])) {
             throw new Exception("no login credentials given");
         }
-        $credentials = explode(":", $_SERVER[HTTP_OJSAUTHORIZATION]);
+        $credentials = explode(":", $_SERVER["HTTP_OJSAUTHORIZATION"]);
         if (count($credentials) != 2) {
             throw new Exception("login credentials not ok");
         }
