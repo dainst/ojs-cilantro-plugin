@@ -191,8 +191,6 @@ class cilantroConnectionApi extends server {
 
 		$deployment = new NativeImportExportDeployment($journal, $user);
 
-		$this->log->warning($user->getId());
-
 		$nativeImportExportPlugin->importSubmissions($doc, $filter, $deployment);
 
         $types = array(ASSOC_TYPE_ISSUE, ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SECTION);
@@ -222,8 +220,6 @@ class cilantroConnectionApi extends server {
 
         $this->return['published_articles'] = $deployment->getProcessedObjectsIds(ASSOC_TYPE_SUBMISSION);
         $this->return['published_issues'] = $deployment->getProcessedObjectsIds(ASSOC_TYPE_ISSUE);
-
-        $this->log->warning($deployment->_processedObjectsId);
 
         restore_error_handler();
 
