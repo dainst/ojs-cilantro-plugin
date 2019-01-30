@@ -57,7 +57,8 @@ class cilantroConnectionApi extends server {
             "id" => $row['journal_id'],
             "key" => $row['journal_key'],
             "setting_value" => $value,
-            "setting_name" => $row['setting_name']
+            "setting_name" => $row['setting_name'],
+			"locale" => $row['locale'],
         );
     }
 
@@ -70,19 +71,6 @@ class cilantroConnectionApi extends server {
     private function _parseXml($xml) {
         $parser = new XMLParser();
         return $parser->parseText($xml);
-    }
-
-    private function _getFrontmatterPlugin() {
-        import('classes.core.PageRouter');
-        $application =& PKPApplication::getApplication();
-        $request = $application->getRequest();
-
-        $router = new PageRouter();
-        $router->setApplication($application);
-        $request->setRouter($router);
-
-        PluginRegistry::loadCategory('generic', false, CONTEXT_ID_NONE);
-        return PluginRegistry::getPlugin('generic', 'dfm');
     }
 
     private function _getNativeImportExportPlugin() {
@@ -212,12 +200,13 @@ class cilantroConnectionApi extends server {
 				journals.journal_id,
 				path as journal_key,
 				setting_name,
-				setting_value
+				setting_value,
+				journal_settings.locale as locale
 			 from
 			 	journals
 				left join journal_settings on journals.journal_id = journal_settings.journal_id
 			where
-				setting_name in ('supportedLocales', 'title')
+				setting_name in ('supportedLocales', 'name', 'description')
 			order by
 				path;";
         foreach ($this->_querySql($sql) as $row) {
@@ -227,7 +216,16 @@ class cilantroConnectionApi extends server {
                     "path" => $row['key'],
                 );
             }
-            $this->return['data'][$row['key']][$row['setting_name']] = $row['setting_value'];
+            if ($row['locale'] != "") {
+            	if (!isset($this->return['data'][$row['key']][$row['setting_name']])) {
+					$this->return['data'][$row['key']][$row['setting_name']] = array();
+				}
+            	if ($row['setting_value'] != "") {
+					$this->return['data'][$row['key']][$row['setting_name']][$row['locale']] = $row['setting_value'];
+				}
+			} else {
+				$this->return['data'][$row['key']][$row['setting_name']] = $row['setting_value'];
+			}
         }
     }
 
@@ -261,52 +259,6 @@ class cilantroConnectionApi extends server {
 
         $this->returnCode = 200;
         return $user;
-    }
-
-    function _importDfmLog($dfm) {
-        $danger = false;
-        foreach ($dfm->logger->log as $entry) {
-            if (in_array($entry->type, array("warning", "danger", "error"))) {
-                $this->log->warnings[] = $entry->text;
-            }
-            $this->log->log("[{$entry->type}] {$entry->text}");
-        }
-    }
-
-    function frontmatters() {
-        $user = $this->login();
-
-        $dfm = $this->_getFrontmatterPlugin();
-        $dfm->loadDfm();
-
-        $command = $this->data["/"][0];
-        $this->log->debug("command:  $command");
-        if (!in_array($command, array("replace", "create"))) {
-            throw new Exception("Frontmatter Creator Command >>$command<< unknown");
-        }
-
-        $dfm->settings->doFrontmatters = $command;
-
-        $type = $this->data["/"][1];
-        $this->log->debug("id-type: $type");
-        if (!in_array($type, \dfm\processor::supportedTypes)) {
-            throw new Exception("Frontmatter Creator Id-Type >>$type<< unknown");
-        }
-
-        $idlist = isset($this->data['id']) ? explode(',', $this->data['id']) : false;
-        if (!$idlist or !count($idlist)) {
-            throw new Exception("nothing to do. provide at least one Id is in >>id<<-Parameter");
-        }
-
-        $plugin->settings->doThumbnails = isset($this->data['thumbnails']) ? !!$this->data['thumbnails'] : false;
-
-        $success = $dfm->startUpdateFrontpages($idlist, $type, false);
-        $this->_importDfmLog($dfm);
-        if (!$success) {
-            throw new Exception("Frontmatter creation did not succeed.");
-        }
-
-
     }
 
     function finish() {
