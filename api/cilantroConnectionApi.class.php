@@ -22,6 +22,17 @@ class cilantroConnectionApi extends server {
         if (!defined("OJS_PRESENT") or !OJS_PRESENT) {
             require_once($ojs_path . '/tools/bootstrap.inc.php');
         }
+
+		// Initialize the request object with a page router
+		$application = Application::getApplication();
+		$request = $application->getRequest();
+		import('classes.core.PageRouter');
+		$router = new PageRouter();
+		$router->setApplication($application);
+		$request->setRouter($router);
+
+		// Initialize the locale and load generic plugins.
+		AppLocale::initialize($request);
     }
 
     private function _checkUser() {
@@ -74,8 +85,13 @@ class cilantroConnectionApi extends server {
     }
 
     private function _getNativeImportExportPlugin() {
-        PluginRegistry::loadCategory('importexport', true, 0);
-        $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
+		$plugins = PluginRegistry::loadCategory('importexport', true, 0);
+
+		foreach ($plugins as $plugin) {
+			$this->warnings[] = "p:" . $plugin->getName();
+		}
+
+        //$nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
         return $nativeImportExportPlugin;
     }
 
@@ -96,12 +112,12 @@ class cilantroConnectionApi extends server {
 
     private function _getJournal($journalPath) {
         $journalDao =& DAORegistry::getDAO('JournalDAO');
-        $journal = $journalDao->getJournalByPath($journalPath);
+        $journal = $journalDao->getByPath($journalPath);
         if (is_null($journal)) {
             $this->returnCode = 404;
             throw new Exception("Journal $journalPath not found");
         }
-        $this->log->debug("got journal " . $journal->getLocalizedTitle() . " ($journalPath)");
+        $this->log->debug("got journal " . $journal->getLocalizedPageHeaderTitle() . " ($journalPath)");
         return $journal;
     }
 
@@ -114,7 +130,8 @@ class cilantroConnectionApi extends server {
     private function _getRoles($user, $journal) {
         $roleDao = DAORegistry::getDAO('RoleDAO');
         $roles = array();
-        foreach ($roleDao->getRolesByUserId($user->getId(), $journal->getId()) as $role) {
+        $allUsersRoles = $roleDao->getByUserIdGroupedByContext($user->getId());
+        foreach ($allUsersRoles[$journal->getId()] as $role) {
             $roles[] = $role->getRoleId();
         }
         return $roles;
@@ -123,7 +140,7 @@ class cilantroConnectionApi extends server {
     private function _isAllowedToUpload($user, $journal) {
         $roles = $this->_getRoles($user, $journal);
         $this->log->debug("userroles: " . implode(", ", $roles));
-        $allowed = array(ROLE_ID_SITE_ADMIN, ROLE_ID_JOURNAL_MANAGER, ROLE_ID_EDITOR);
+        $allowed = array(ROLE_ID_SITE_ADMIN, ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR);
         return array_intersect($roles, $allowed);
     }
 
