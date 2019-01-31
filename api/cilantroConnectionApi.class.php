@@ -51,10 +51,10 @@ class cilantroConnectionApi extends server {
     }
 
     private function _querySql($sql) {
-        $articleDao = DAORegistry::getDAO('ArticleDAO');
-        $records = $articleDao->retrieve($sql);
-        $result = new DAOResultFactory($records, $this, '_convertSqlResultRow');
-        return $result->toArray();
+		$monographDAO = DAORegistry::getDAO('MonographDAO');
+		$records = $monographDAO->retrieve($sql);
+		$result = new DAOResultFactory($records, $this, '_convertSqlResultRow');
+		return $result->toArray();
     }
 
     function _convertSqlResultRow($row) {
@@ -65,10 +65,11 @@ class cilantroConnectionApi extends server {
         }
 
         return array(
-            "id" => $row['journal_id'],
-            "key" => $row['journal_key'],
+            "id" => $row['press_id'],
+            "key" => $row['press_key'],
             "setting_value" => $value,
-            "setting_name" => $row['setting_name']
+            "setting_name" => $row['setting_name'],
+			"locale" => $row['locale']
         );
     }
 
@@ -217,29 +218,39 @@ class cilantroConnectionApi extends server {
         $this->log->debug("Import Successfull!");
     }
 
-    public function journalInfo() {
-        $this->return['data'] = array();
-        $sql = "select
-				journals.journal_id,
-				path as journal_key,
-				setting_name,
-				setting_value
-			 from
-			 	journals
-				left join journal_settings on journals.journal_id = journal_settings.journal_id
-			where
-				setting_name in ('supportedLocales', 'title')
-			order by
-				path;";
-        foreach ($this->_querySql($sql) as $row) {
-            if (!isset($this->return['data'][$row['key']])) {
-                $this->return['data'][$row['key']] = array(
-                    "id" => $row['id'],
-                    "path" => $row['key'],
-                );
-            }
-            $this->return['data'][$row['key']][$row['setting_name']] = $row['setting_value'];
-        }
+    public function pressInfo() {
+		$this->return['data'] = array();
+		$sql = "select
+				  presses.press_id,
+				  path as press_key,
+				  setting_name,
+				  setting_value,
+				  press_settings.locale as locale
+				from
+				  presses
+					left join press_settings on presses.press_id = press_settings.press_id
+				where
+					setting_name in ('supportedLocales', 'name', 'description')
+				order by
+				  path;";
+		foreach ($this->_querySql($sql) as $row) {
+			if (!isset($this->return['data'][$row['key']])) {
+				$this->return['data'][$row['key']] = array(
+					"id" => $row['id'],
+					"path" => $row['key'],
+				);
+			}
+			if ($row['locale'] != "") {
+				if (!isset($this->return['data'][$row['key']][$row['setting_name']])) {
+					$this->return['data'][$row['key']][$row['setting_name']] = array();
+				}
+				if ($row['setting_value'] != "") {
+					$this->return['data'][$row['key']][$row['setting_name']][$row['locale']] = $row['setting_value'];
+				}
+			} else {
+				$this->return['data'][$row['key']][$row['setting_name']] = $row['setting_value'];
+			}
+		}
     }
 
     function import() {
