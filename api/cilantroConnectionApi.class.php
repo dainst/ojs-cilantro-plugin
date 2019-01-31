@@ -79,35 +79,11 @@ class cilantroConnectionApi extends server {
         return $xml;
     }
 
-    private function _parseXml($xml) {
-        $parser = new XMLParser();
-        return $parser->parseText($xml);
-    }
-
-    private function _getFrontmatterPlugin() {
-        import('classes.core.PageRouter');
-        $application =& PKPApplication::getApplication();
-        $request = $application->getRequest();
-
-        $router = new PageRouter();
-        $router->setApplication($application);
-        $request->setRouter($router);
-
-        PluginRegistry::loadCategory('generic', false, CONTEXT_ID_NONE);
-        return PluginRegistry::getPlugin('generic', 'dfm');
-    }
-
-    private function _getNativeImportExportPlugin() {
-        PluginRegistry::loadCategory('importexport', true, 0);
-        $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
-        return $nativeImportExportPlugin;
-    }
-
-    private function _saveToTempFile($data) {
-        $fileName = "/tmp/" + md5(rand() + date());
-        file_put_contents($fileName);
-        return $fileName;
-    }
+	private function _getNativeImportExportPlugin() {
+		PluginRegistry::loadCategory('importexport', true, 0);
+		$nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
+		return $nativeImportExportPlugin;
+	}
 
     private function _getompUser($userId = 1) {
         $userDao =& DAORegistry::getDAO('UserDAO');
@@ -118,105 +94,119 @@ class cilantroConnectionApi extends server {
         return $user;
     }
 
-    private function _getJournal($journalPath) {
-        $journalDao =& DAORegistry::getDAO('JournalDAO');
-        $journal = $journalDao->getJournalByPath($journalPath);
-        if (is_null($journal)) {
+    private function _getPress($pressPath) {
+        $pressDao =& DAORegistry::getDAO('PressDAO');
+		$press = $pressDao->getByPath($pressPath);
+        if (is_null($press)) {
             $this->returnCode = 404;
-            throw new Exception("Journal $journalPath not found");
+            throw new Exception("Journal $pressPath not found");
         }
-        $this->log->debug("got journal " . $journal->getLocalizedTitle() . " ($journalPath)");
-        return $journal;
+        $this->log->debug("got press " . $press->getPageHeaderTitle() . " ($pressPath)");
+        return $press;
     }
 
-    private function _importErrors($errors) {
-        foreach ($errors as $error) {
-            $this->log->warning(PKPLocale::translate($error[0], $error[1]));
-        }
-    }
+	private function _getRoles($user, $journal) {
+		$roleDao = DAORegistry::getDAO('RoleDAO');
+		$roles = array();
+		$allUsersRoles = $roleDao->getByUserIdGroupedByContext($user->getId());
+		foreach ($allUsersRoles[$journal->getId()] as $role) {
+			$roles[] = $role->getRoleId();
+		}
+		return $roles;
+	}
 
-    private function _getRoles($user, $journal) {
-        $roleDao = DAORegistry::getDAO('RoleDAO');
-        $roles = array();
-        foreach ($roleDao->getRolesByUserId($user->getId(), $journal->getId()) as $role) {
-            $roles[] = $role->getRoleId();
-        }
-        return $roles;
-    }
+	private function _isAllowedToUpload($user, $journal) {
+		$roles = $this->_getRoles($user, $journal);
+		$this->log->debug("userroles: " . implode(", ", $roles));
+		$allowed = array(ROLE_ID_SITE_ADMIN, ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR);
+		return array_intersect($roles, $allowed);
+	}
 
-    private function _isAllowedToUpload($user, $journal) {
-        $roles = $this->_getRoles($user, $journal);
-        $this->log->debug("userroles: " . implode(", ", $roles));
-        $allowed = array(ROLE_ID_SITE_ADMIN, ROLE_ID_JOURNAL_MANAGER, ROLE_ID_EDITOR);
-        return array_intersect($roles, $allowed);
-    }
+	private function _runImport($xml, $pressCode) {
 
-    private function _getIssuesArticleIds($issueId) {
-        $publishedArticleDAO =& DAORegistry::getDAO('PublishedArticleDAO');
-        $publishedArticles = $publishedArticleDAO->getPublishedArticles($issueId);
-        return $this->_getObjectIdsFromList($publishedArticles);
-    }
+		$nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
 
-    private function _getObjectIdsFromList($list) {
-        $ids = array();
-        foreach ($list as $record) {
-            $ids[] = $record->getId();
-        }
-        return $ids;
-    }
+		$press = $this->_getPress($pressCode);
+		$user = $this->login();
 
-    private function _runImport($xml, $journalCode) {
+		if (!$this->_isAllowedToUpload($user, $press)) {
+			$this->returnCode = 401;
+			throw new Exception("The user >>" . $user->getUsername() . "<< is not allowed to upload to >>" . $pressCode .
+				"<<. He must have the role >>editor<< or >>manager<< for this journal.");
+		}
 
-        $nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
+		$doc = new DOMDocument();
+		$doc->loadXml($xml);
 
-        $journal = $this->_getJournal($journalCode);
-        $user = $this->login();
+		$rootTag = $doc->documentElement->nodeName;
 
-        if (!$this->_isAllowedToUpload($user, $journal)) {
-            $this->returnCode = 401;
-            throw new Exception("The user >>" . $user->getUsername() . "<< is not allowed to upload to >>" . $journalCode .
-            "<<. He must have the role >>editor<< or >>manager<< for this journal.");
-        }
+		if ($rootTag !== "monograph") {
+			$this->returnCode = 401;
+			throw new Exception("The OJS-Cilantro-Plugin only supports import.xml's with the root node <monograph> and it's <{$rootTag}>.");
+		}
 
-        $context = array(
-            'journal' => $journal,
-            'user' => $user
-        );
+		@set_time_limit(0);
 
-        $doc = $this->_parseXml($xml);
+		// catch DB-errors (and other uncaught php-level-errors)
+		define("DONT_DIE_ON_ERROR", true);
+		set_error_handler(function($errno, $errstr, $errfile, $errline) {
+			throw new Exception("Import failed: [$errno]" . $errstr);
+		}, E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING & ~E_NOTICE);
 
-        if ($doc->name !== "issues") {
-            $this->returnCode = 401;
-            throw new Exception("The omp-Cilantro-Plugin only supports import.xml's with the root node <issues> and it's <{$doc->name}>.");
-        }
+		// catch xml errors
+		libxml_use_internal_errors(true);
 
-        $errors = array();
-        $issues = array();
-        $articles = array();
+		// set up the import
+		$deployment = new NativeImportExportDeployment($press, $user);
 
-        @set_time_limit(0);
+		// go
+		$nativeImportExportPlugin->importSubmissions($doc, $deployment);
 
-        // catch DB-errors
-        define("DONT_DIE_ON_ERROR", true);
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
-            throw new Exception("Import Failed: " . $errstr);
-        }, E_ALL & ~E_DEPRECATED & ~E_STRICT);
+		// collect xml errors
+		$lastError = "";
+		$validationErrors = array_filter(libxml_get_errors(), function($a) {
+			return $a->level == LIBXML_ERR_ERROR || $a->level == LIBXML_ERR_FATAL;
+		});
+		libxml_clear_errors();
+		if (count($validationErrors)) {
+			foreach ($validationErrors as $error) {
+				$lastError = $error;
+				$this->log->warning("Validation Error: {$error->message} (line: {$error->line})");
+			}
+		}
 
-        if (!$nativeImportExportPlugin->handleImport($context, $doc, $errors, $issues, $articles, true)) {
-            $this->_importErrors($errors);
-            throw new Exception("Import Failed.");
-        }
-        
-        $this->return['published_articles'] = $this->_getObjectIdsFromList($articles);
-        $this->return['published_issues'] = $this->_getObjectIdsFromList($issues);
-        foreach ($issues as $issue) {
-            $this->return['published_articles'] = array_merge($this->return['published_articles'], $this->_getIssuesArticleIds($issue->getId()));
-        }
+		// catch ojs-handled errors
+		$types = array(ASSOC_TYPE_SUBMISSION);
 
-        restore_error_handler();
+		foreach ($types as $type) {
+			foreach ($deployment->getProcessedObjectsWarnings($type) as $objectId => $warnings) {
+				foreach ($warnings as $warning) {
+					$this->log->warning($warning);
+				}
+			}
+			foreach ($deployment->getProcessedObjectsErrors($type) as $objectId => $errors) {
+				foreach ($errors as $error) {
+					$lastError = $error;
+					$this->log->warning("Error: " . $error);
+				}
+			}
+		}
 
-        $this->log->debug("Import Successfull!");
-    }
+		// return unsuccess and cleanup is critical
+		if ($lastError != "") {
+			foreach (array_keys($types) as $assocType) {
+				$deployment->removeImportedObjects($assocType);
+			}
+			throw new Exception("Import failed: $lastError");
+		}
+
+		// return result
+		$this->return['published_monographs'] = $deployment->getProcessedObjectsIds(ASSOC_TYPE_SUBMISSION);
+
+		restore_error_handler();
+
+		$this->log->debug("Import successful!");
+	}
 
     public function pressInfo() {
 		$this->return['data'] = array();
@@ -255,8 +245,8 @@ class cilantroConnectionApi extends server {
 
     function import() {
         $xml = $this->_checkXml($this->data["%"]);
-        $journalCode = $this->data["/"][0];
-        $this->_runImport($xml, $journalCode);
+		$pressCode = $this->data["/"][0];
+        $this->_runImport($xml, $pressCode);
     }
 
     function login() {
