@@ -178,24 +178,40 @@ class cilantroConnectionApi extends server {
 
         @set_time_limit(0);
 
-        // catch DB-errors
+        // catch DB-errors (and other uncaught php-level-errors)
         define("DONT_DIE_ON_ERROR", true);
         set_error_handler(function($errno, $errstr, $errfile, $errline) {
             throw new Exception("Import failed: [$errno]" . $errstr);
         }, E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING & ~E_NOTICE);
 
+		// catch xml errors
+		libxml_use_internal_errors(true);
+
+        // set up the import
 		$filter = 'native-xml=>issue';
 		if (in_array($doc->documentElement->tagName, array('article', 'articles'))) {
 			$filter = 'native-xml=>article';
 		}
-
 		$deployment = new NativeImportExportDeployment($journal, $user);
 
+		// go
 		$nativeImportExportPlugin->importSubmissions($doc, $filter, $deployment);
 
-        $types = array(ASSOC_TYPE_ISSUE, ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SECTION);
+		// collect xml errors
+		$lastError = "";
+		$validationErrors = array_filter(libxml_get_errors(), function($a) {
+			return $a->level == LIBXML_ERR_ERROR || $a->level == LIBXML_ERR_FATAL;
+		});
+		libxml_clear_errors();
+		if (count($validationErrors)) {
+			foreach ($validationErrors as $error) {
+				$lastError = $error;
+				$this->log->warning("Validation Error: {$error->message} (line: {$error->line})");
+			}
+		}
 
-        $lastError = "";
+		// catch ojs-handled errors
+        $types = array(ASSOC_TYPE_ISSUE, ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SECTION);
 
         foreach ($types as $type) {
 			foreach ($deployment->getProcessedObjectsWarnings($type) as $objectId => $warnings) {
@@ -211,6 +227,7 @@ class cilantroConnectionApi extends server {
 			}
 		}
 
+        // return unsuccess and cleanup is critical
         if ($lastError != "") {
 			foreach (array_keys($types) as $assocType) {
 				$deployment->removeImportedObjects($assocType);
@@ -218,6 +235,7 @@ class cilantroConnectionApi extends server {
 			throw new Exception("Import failed: $lastError");
 		}
 
+        // return result
         $this->return['published_articles'] = $deployment->getProcessedObjectsIds(ASSOC_TYPE_SUBMISSION);
         $this->return['published_issues'] = $deployment->getProcessedObjectsIds(ASSOC_TYPE_ISSUE);
 
