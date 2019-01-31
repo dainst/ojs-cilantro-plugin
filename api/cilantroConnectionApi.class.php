@@ -1,27 +1,38 @@
 <?php
 class cilantroConnectionApi extends server {
 
-    private $_ojsUser;
-    private $_locale;
+    private $_ompUser;
 
     function __construct($data, $logger, array $settings = array()) {
         parent::__construct($data, $logger, $settings);
     }
 
     function start() {
-        $this->_loadOJS();
+        $this->_loadOMP();
     }
 
-    private function _loadOJS() {
+    private function _loadOMP() {
         // where am I?
         preg_match('#(.+)\/plugins\/(.*)\/api#', dirname(__file__), $m);
-        $ojs_path = $m[1];
+        $omp_path = $m[1];
         $plugin_path = $m[2];
 
-        // load OJS
-        if (!defined("OJS_PRESENT") or !OJS_PRESENT) {
-            require_once($ojs_path . '/tools/bootstrap.inc.php');
-        }
+        // load omp
+		require($omp_path . '/tools/bootstrap.inc.php');
+
+		// Initialize the request object with a page router
+		$application = Application::getApplication();
+		$request = $application->getRequest();
+		import('classes.core.PageRouter');
+		$router = new PageRouter();
+		$router->setApplication($application);
+		$request->setRouter($router);
+
+		// Initialize the locale and load generic plugins.
+		AppLocale::initialize($request);
+
+		// return info
+		$this->return["system"] = $application->getName() . " " . $application->getCurrentVersion()->getVersionString();
     }
 
     private function _checkUser() {
@@ -34,8 +45,8 @@ class cilantroConnectionApi extends server {
             throw new Exception("no user logged in");
         }
 
-        $this->_ojsUser = $session->user;
-        $this->log->debug('access allowed for user ' . $this->_ojsUser->getUsername());
+        $this->_ompUser = $session->user;
+        $this->log->debug('access allowed for user ' . $this->_ompUser->getUsername());
         $this->returnCode = 403;
     }
 
@@ -97,7 +108,7 @@ class cilantroConnectionApi extends server {
         return $fileName;
     }
 
-    private function _getOJSUser($userId = 1) {
+    private function _getompUser($userId = 1) {
         $userDao =& DAORegistry::getDAO('UserDAO');
         $user = $userDao->getById($userId);
         if (is_null($user)) {
@@ -175,7 +186,7 @@ class cilantroConnectionApi extends server {
 
         if ($doc->name !== "issues") {
             $this->returnCode = 401;
-            throw new Exception("The OJS-Cilantro-Plugin only supports import.xml's with the root node <issues> and it's <{$doc->name}>.");
+            throw new Exception("The omp-Cilantro-Plugin only supports import.xml's with the root node <issues> and it's <{$doc->name}>.");
         }
 
         $errors = array();
@@ -234,16 +245,15 @@ class cilantroConnectionApi extends server {
     function import() {
         $xml = $this->_checkXml($this->data["%"]);
         $journalCode = $this->data["/"][0];
-        $user = "admin";
         $this->_runImport($xml, $journalCode);
     }
 
     function login() {
         $this->returnCode = 401;
-        if (!isset($_SERVER["HTTP_OJSAUTHORIZATION"])) {
+        if (!isset($_SERVER["HTTP_OMPAUTHORIZATION"])) {
             throw new Exception("no login credentials given");
         }
-        $credentials = explode(":", $_SERVER["HTTP_OJSAUTHORIZATION"]);
+        $credentials = explode(":", $_SERVER["HTTP_OMPAUTHORIZATION"]);
         if (count($credentials) != 2) {
             throw new Exception("login credentials not ok");
         }
@@ -263,51 +273,6 @@ class cilantroConnectionApi extends server {
         return $user;
     }
 
-    function _importDfmLog($dfm) {
-        $danger = false;
-        foreach ($dfm->logger->log as $entry) {
-            if (in_array($entry->type, array("warning", "danger", "error"))) {
-                $this->log->warnings[] = $entry->text;
-            }
-            $this->log->log("[{$entry->type}] {$entry->text}");
-        }
-    }
-
-    function frontmatters() {
-        $user = $this->login();
-
-        $dfm = $this->_getFrontmatterPlugin();
-        $dfm->loadDfm();
-
-        $command = $this->data["/"][0];
-        $this->log->debug("command:  $command");
-        if (!in_array($command, array("replace", "create"))) {
-            throw new Exception("Frontmatter Creator Command >>$command<< unknown");
-        }
-
-        $dfm->settings->doFrontmatters = $command;
-
-        $type = $this->data["/"][1];
-        $this->log->debug("id-type: $type");
-        if (!in_array($type, \dfm\processor::supportedTypes)) {
-            throw new Exception("Frontmatter Creator Id-Type >>$type<< unknown");
-        }
-
-        $idlist = isset($this->data['id']) ? explode(',', $this->data['id']) : false;
-        if (!$idlist or !count($idlist)) {
-            throw new Exception("nothing to do. provide at least one Id is in >>id<<-Parameter");
-        }
-
-        $plugin->settings->doThumbnails = isset($this->data['thumbnails']) ? !!$this->data['thumbnails'] : false;
-
-        $success = $dfm->startUpdateFrontpages($idlist, $type, false);
-        $this->_importDfmLog($dfm);
-        if (!$success) {
-            throw new Exception("Frontmatter creation did not succeed.");
-        }
-
-
-    }
 
     function finish() {
 

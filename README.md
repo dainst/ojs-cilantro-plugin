@@ -1,6 +1,6 @@
 # ojs-cilantro-plugin
 
-Stellt eine einfache Web-API für OJS2 zur Verfügung für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
+Stellt eine einfache Web-API für OMP3 zur Verfügung für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
 
 # Installation
 
@@ -16,7 +16,7 @@ Every URL starts with /<ojs-url>/plugins/generic/ojs-cilantro-plugin/api/
 
 ## Authorzation
 
-You need a HTTP-Header called "ojsAuthorization",
+You need a HTTP-Header called "ompAuthorization",
 containg OJS-User and Password in the form
 <username>:<password>
 whereby both is base64encoded (to avoid special character issues).
