@@ -83,21 +83,10 @@ class cilantroConnectionApi extends server {
     }
 
     private function _getNativeImportExportPlugin() {
-		$plugins = PluginRegistry::loadCategory('importexport', true, 0);
-
-		foreach ($plugins as $plugin) {
-			$this->warnings[] = "p:" . $plugin->getName();
-		}
-
+		PluginRegistry::loadCategory('importexport', true, 0);
         $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
         return $nativeImportExportPlugin;
     }
-
-//    private function _saveToTempFile($data) {
-//        $fileName = "/tmp/" + md5(rand() + date());
-//        file_put_contents($fileName);
-//        return $fileName;
-//    }
 
     private function _getOJSUser($userId = 1) {
         $userDao =& DAORegistry::getDAO('UserDAO');
