@@ -88,15 +88,6 @@ class cilantroConnectionApi extends server {
         return $nativeImportExportPlugin;
     }
 
-    private function _getOJSUser($userId = 1) {
-        $userDao =& DAORegistry::getDAO('UserDAO');
-        $user = $userDao->getById($userId);
-        if (is_null($user)) {
-            throw new Exception("User $userId not found");
-        }
-        return $user;
-    }
-
     private function _getJournal($journalPath) {
         $journalDao =& DAORegistry::getDAO('JournalDAO');
         $journal = $journalDao->getByPath($journalPath);
@@ -107,12 +98,6 @@ class cilantroConnectionApi extends server {
         $this->log->debug("got journal " . $journal->getLocalizedPageHeaderTitle() . " ($journalPath)");
         return $journal;
     }
-
-//    private function _importErrors($errors) {
-//        foreach ($errors as $error) {
-//            $this->log->warning(PKPLocale::translate($error[0], $error[1]));
-//        }
-//    }
 
     private function _getRoles($user, $journal) {
         $roleDao = DAORegistry::getDAO('RoleDAO');
@@ -129,20 +114,6 @@ class cilantroConnectionApi extends server {
         $this->log->debug("userroles: " . implode(", ", $roles));
         $allowed = array(ROLE_ID_SITE_ADMIN, ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR);
         return array_intersect($roles, $allowed);
-    }
-
-    private function _getIssuesArticleIds($issueId) {
-        $publishedArticleDAO =& DAORegistry::getDAO('PublishedArticleDAO');
-        $publishedArticles = $publishedArticleDAO->getPublishedArticles($issueId);
-        return $this->_getObjectIdsFromList($publishedArticles);
-    }
-
-    private function _getObjectIdsFromList($list) {
-        $ids = array();
-        foreach ($list as $record) {
-            $ids[] = $record->getId();
-        }
-        return $ids;
     }
 
     private function _runImport($xml, $journalCode) {
