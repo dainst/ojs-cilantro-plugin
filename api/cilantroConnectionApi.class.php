@@ -33,6 +33,9 @@ class cilantroConnectionApi extends server {
 
 		// Initialize the locale and load generic plugins.
 		AppLocale::initialize($request);
+
+		// return info
+		$this->return["system"] = $application->getName() . " " . $application->getCurrentVersion()->getVersionString();
     }
 
     private function _checkUser() {
