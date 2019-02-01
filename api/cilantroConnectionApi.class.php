@@ -122,6 +122,37 @@ class cilantroConnectionApi extends server {
 		return array_intersect($roles, $allowed);
 	}
 
+	private function _publishMonograph($mId, $press) {
+    	$monographDao = DAORegistry::getDAO("MonographDAO"); /* @var $monographDao MonographDAO */
+		$submissionFileDao = DAORegistry::getDAO("SubmissionFileDAO"); /* @var $submissionFileDao SubmissionFileDAO */
+		$representationDao = Application::getRepresentationDAO(); /* @var $representationDao RepresentationDAO */
+
+		$monograph = $monographDao->getById($mId, $press->getId(), false); /* @var $monograph Monograph */
+
+		$submissionFiles = $submissionFileDao->getBySubmissionId($mId);
+
+		foreach ($submissionFiles as $file) {
+			$salesType ='openAccess';
+			$this->log->warning("publishing: " . $file->getFileId() . "-" . $file->getRevision());
+			$approvedProof = $submissionFileDao->getRevision($file->getFileId(), $file->getRevision());
+			$approvedProof->setDirectSalesPrice(0);
+			$approvedProof->setSalesType($salesType);
+			$approvedProof->setViewable(true);
+			$submissionFileDao->updateObject($approvedProof);
+
+			$representationsRF = $representationDao->getBySubmissionId($mId); /* @var $representationsRF DAOResultFactory */
+			$representations = $representationsRF->toAssociativeArray(); /* @var $representations array */
+
+			$representation = array_pop($representations); /* @var $representation Representation */ // we import only one
+			//$approvedProof->set
+			$representation->
+
+			$this->log->warning(print_r($representation,1));
+		}
+
+	}
+
+
 	private function _runImport($xml, $pressCode) {
 
 		$nativeImportExportPlugin = $this->_getNativeImportExportPlugin();
@@ -202,6 +233,11 @@ class cilantroConnectionApi extends server {
 
 		// return result
 		$this->return['published_monographs'] = $deployment->getProcessedObjectsIds(ASSOC_TYPE_SUBMISSION);
+
+//		// publish them
+//		foreach ($deployment->getProcessedObjectsIds(ASSOC_TYPE_SUBMISSION) as $mId) {
+//			$this->_publishMonograph($mId, $press);
+//		}
 
 		restore_error_handler();
 
