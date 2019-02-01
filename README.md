@@ -1,6 +1,6 @@
 # ojs-cilantro-plugin
 
-Stellt eine einfache Web-API für OJS2 zur Verfügung für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
+Stellt eine einfache Web-API für OJS3 zur Verfügung, für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
 
 # Installation
 
@@ -14,10 +14,10 @@ Stellt eine einfache Web-API für OJS2 zur Verfügung für diejenigen Funktionen
 
 Every URL starts with /<ojs-url>/plugins/generic/ojs-cilantro-plugin/api/
 
-## Authorzation
+## Authorization
 
 You need a HTTP-Header called "ojsAuthorization",
-containg OJS-User and Password in the form
+containing OJS-User and Password in the form
 <username>:<password>
 whereby both is base64encoded (to avoid special character issues).
 
@@ -142,7 +142,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
     
 ### import
   
-     Can be used to test login credentials. Does nothing excpet for login.
+     Imports an Issue
      
   * **URL**
      
@@ -154,7 +154,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   
   * **URL Params**
   
-    none
+    :journalcode - the journalCode "aa", "test" etc.
   
   * **Data Params**
   
@@ -162,7 +162,8 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
     
   * **POST Body**
   
-    Contains full OJS2-Import-XML. (http://pkp.sfu.ca/ojs/dtds/2.4.8/native.dtd)
+    Contains full OJS3-Import-XML.
+    See example/example.xml
   
   * **Authorization**
   
@@ -205,77 +206,3 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
     ```
       /ojs-backup/plugins/generic/import/aa
     ```
-    
-### frontmatters
-
-   Creates or Updates Frontmatters of PDF-Galleys (Representations) in the OJS.
-   
-* **URL**
-   
-  /frontmatters/:command/:id-type/
- 
-* **Method:**
-
-  `GET`
-
-* **URL Params**
-
-   **Required:**
- 
-   `command=[create|replace]`
-   
-   _create_ adds a new Frontmatter page to the documents,
-   _replace_ replaces the frist page of the document with a frontmatter.
-   
-   `id-type=[article|issue|galley|journal]`
-  
-    We provide some ids, wich kind of objects are meant by that? 
-
-* **Data Params**
-
-  **Required:**
-  
-  id=[comma-separated list of integers]
-  
-  Ids of the objects to work with
-  
-  **Optional:**
-  
-  thumbnails=[boolean]
-  
-  Shall we create some new thumbnails too?
-
-* **Authorization**
-
-  **Required**
-
-* **Success Response:**
-
-  * **Code:** 200  
-
-  ```
-  {  
-    "task": "frontmatters",
-    "success": true,  
-    "warnings": ["some warning"]
-  }
-  ```
-
-* **Error Response:**
-
-  * **Code:** 404 (or else, depends)  
-
-  ```
-  {
-    "success": false,
-    "message": "Error Reason",
-    "warnings": ["first warning", "second warning"]
-  }
-  ```
-
-* **Sample Call:**
-
-  ```
-    /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/frontmatters/create/issue/?id=99
-  ```
-        
