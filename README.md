@@ -1,10 +1,10 @@
-# ojs-cilantro-plugin
+# ojs-cilantro-plugin ... for OMP!
 
 Stellt eine einfache Web-API für OMP3 zur Verfügung für diejenigen Funktionen, die Cilantro bzw. Salvia brauchen.
 
 # Installation
 
-* got to <ojs>/plugins/generic
+* git to <ojs>/plugins/generic
 * git clone <this>
 * cd <this>
 * git submodule init
@@ -12,9 +12,9 @@ Stellt eine einfache Web-API für OMP3 zur Verfügung für diejenigen Funktionen
 
 # API
 
-Every URL starts with /<ojs-url>/plugins/generic/ojs-cilantro-plugin/api/
+Every URL starts with /<omp-url>/plugins/generic/ojs-cilantro-plugin/api/
 
-## Authorzation
+## Authorization
 
 You need a HTTP-Header called "ompAuthorization",
 containg OJS-User and Password in the form
@@ -25,13 +25,13 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 
 ## Endpoints
 
-### journalInfo
+### pressInfo
 
    Gives back basic information about present journals as needed by Salvia.
    
 * **URL**
    
-  /journalinfo
+  /pressinfo
  
 * **Method:**
 
@@ -55,7 +55,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 
   ```
   {  
-    "task": "journalinfo",
+    "task": "pressinfo",
     "success": true,  
     "warnings": ["a warning"],
     "data": {
@@ -83,16 +83,20 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 * **Sample Call:**
 
   ```
-    /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/journalInfo
+    /books/plugins/generic/ojs-cilantro-plugin/api/pressInfo
   ```
   
 ### login
   
      Can be used to test login credentials. Does nothing excpet for login.
      
+     Attention: As of OMP 3.1.1 appreantly not all information can be imported via XML.
+     So it's not possible to automatically publish the imported books.
+     A function for that could be designed.
+     
   * **URL**
      
-    /journalinfo
+    /login
    
   * **Method:**
   
@@ -137,16 +141,16 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   * **Sample Call:**
   
     ```
-      /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/login
+      /books/plugins/generic/ojs-cilantro-plugin/api/login
     ```
     
 ### import
   
-     Can be used to test login credentials. Does nothing excpet for login.
+     Imports a Monograph
      
   * **URL**
      
-    /import/:journalcode
+    /import/:presscode
    
   * **Method:**
   
@@ -154,7 +158,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   
   * **URL Params**
   
-    none
+    :presscode - the code of the press. We currently use only one press, which is called "dai"
   
   * **Data Params**
   
@@ -162,7 +166,9 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
     
   * **POST Body**
   
-    Contains full OJS2-Import-XML. (http://pkp.sfu.ca/ojs/dtds/2.4.8/native.dtd)
+    Contains full OMP-Import-XML. (http://pkp.sfu.ca/ojs/dtds/2.4.8/native.dtd)
+    
+    See example/example.xml
   
   * **Authorization**
   
@@ -174,13 +180,10 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   
     ```
     {  
-      "published_articles": [
+      "published_monographs": [
         "475",
         "476",
         "477"
-      ],
-      "published_issues": [
-        "231"
       ],
       "task": "import",
       "success": true,
@@ -203,79 +206,5 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   * **Sample Call:**
   
     ```
-      /ojs-backup/plugins/generic/import/aa
+      /books/plugins/generic/import/dai
     ```
-    
-### frontmatters
-
-   Creates or Updates Frontmatters of PDF-Galleys (Representations) in the OJS.
-   
-* **URL**
-   
-  /frontmatters/:command/:id-type/
- 
-* **Method:**
-
-  `GET`
-
-* **URL Params**
-
-   **Required:**
- 
-   `command=[create|replace]`
-   
-   _create_ adds a new Frontmatter page to the documents,
-   _replace_ replaces the frist page of the document with a frontmatter.
-   
-   `id-type=[article|issue|galley|journal]`
-  
-    We provide some ids, wich kind of objects are meant by that? 
-
-* **Data Params**
-
-  **Required:**
-  
-  id=[comma-separated list of integers]
-  
-  Ids of the objects to work with
-  
-  **Optional:**
-  
-  thumbnails=[boolean]
-  
-  Shall we create some new thumbnails too?
-
-* **Authorization**
-
-  **Required**
-
-* **Success Response:**
-
-  * **Code:** 200  
-
-  ```
-  {  
-    "task": "frontmatters",
-    "success": true,  
-    "warnings": ["some warning"]
-  }
-  ```
-
-* **Error Response:**
-
-  * **Code:** 404 (or else, depends)  
-
-  ```
-  {
-    "success": false,
-    "message": "Error Reason",
-    "warnings": ["first warning", "second warning"]
-  }
-  ```
-
-* **Sample Call:**
-
-  ```
-    /ojs-backup/plugins/generic/ojs-cilantro-plugin/api/frontmatters/create/issue/?id=99
-  ```
-        
