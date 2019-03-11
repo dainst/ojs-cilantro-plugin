@@ -2,7 +2,6 @@
 class cilantroConnectionApi extends server {
 
     private $_ojsUser;
-    private $_locale;
 
     function __construct($data, $logger, array $settings = array()) {
         parent::__construct($data, $logger, $settings);
@@ -253,6 +252,7 @@ class cilantroConnectionApi extends server {
 
         $this->log->debug("credentials: $username : password");
 
+        $reason = "";
         $user = Validation::login($username, $password, $reason, false);
 
         if (!$user) {
@@ -298,7 +298,7 @@ class cilantroConnectionApi extends server {
             throw new Exception("nothing to do. provide at least one Id is in >>id<<-Parameter");
         }
 
-        $plugin->settings->doThumbnails = isset($this->data['thumbnails']) ? !!$this->data['thumbnails'] : false;
+        $dfm->settings->doThumbnails = isset($this->data['thumbnails']) ? !!$this->data['thumbnails'] : false;
 
         $success = $dfm->startUpdateFrontpages($idlist, $type, false);
         $this->_importDfmLog($dfm);
