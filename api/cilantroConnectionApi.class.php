@@ -311,6 +311,33 @@ class cilantroConnectionApi extends server {
     }
 
 
+	function zenon() {
+		$dao = new DAO();
+		$url = Config::getVar('general', 'base_url') . '/index.php/';
+		$zid = (isset($this->data["/"]) and isset($this->data["/"][0]))
+			? preg_replace('/\D/', '', $this->data["/"][0])
+			: false;
+		$oao = false; // select open access files only?
+		$sql = "select
+				  replace(a_s.setting_value,'&dfm','') as zenonid,
+				  concat('$url', j.path, '/article/view/', a.submission_id) as url
+				from
+				  published_submissions as p_a
+					left join submissions as a on a.submission_id = p_a.submission_id
+					left join submission_settings as a_s on p_a.submission_id = a_s.submission_id
+					left join presses as j on j.press_id = a.context_id
+				where
+					setting_name in('pub-id::other::zenon','zenon_id')
+				  and setting_value not in ('', '(((new)))')
+				  and a.status = 3
+				  and j.enabled = 1" .
+			($zid ? " and a_s.setting_value = '$zid'" : '');
+		$res = $dao->retrieve($sql);
+		$this->return["publications"] = $res->getAssoc();
+		$res->Close();
+	}
+
+
     function finish() {
 
     }

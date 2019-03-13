@@ -208,3 +208,51 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
     ```
       /books/plugins/generic/import/dai
     ```
+    
+### get zenon ids
+
+	retrieves a list fo all zenon-ids in the system with the links to the articles
+	
+ * **URL**
+	 
+	/zenon
+   
+  * **Method:**
+  
+	`GET`
+  
+  * **URL Params**
+  
+	none
+  
+  * **Data Params**
+  
+	none
+  
+  * **Authorization**
+  
+	not required
+  
+  * **Example Success Response:**
+  
+	* **Code:** 200  
+  
+	```
+	{
+		"system": "omp 3.2.0.0",
+		"publications":{
+			"123456798": "http:\/\/localhost\/omp\/index.php\/test\/article\/view\/1",
+			"987654251": "http:\/\/localhost\/omp\/index.php\/test\/article\/view\/2"
+		},
+		"task": "zenon",
+		"success":true,
+		"warnings":[]
+	}
+	```
+	
+  * **Sample Call:**
+  
+	```
+	  /books/plugins/generic/ojs-cilantro-plugin/api/zenon
+	```
+
