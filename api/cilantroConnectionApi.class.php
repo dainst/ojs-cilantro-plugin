@@ -320,7 +320,7 @@ class cilantroConnectionApi extends server {
 		$oao = false; // select open access files only?
 		$sql = "select
 				  replace(a_s.setting_value,'&dfm','') as zenonid,
-				  concat('$url', j.path, '/article/view/', a.submission_id) as url
+				  concat('$url', j.path, '/catalog/book/', a.submission_id) as url
 				from
 				  published_submissions as p_a
 					left join submissions as a on a.submission_id = p_a.submission_id
