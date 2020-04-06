@@ -18,6 +18,7 @@ Every URL starts with /<omp-url>/plugins/generic/ojs-cilantro-plugin/api/
 
 You need a HTTP-Header called "ompAuthorization",
 containg OJS-User and Password in the form
+
 <username>:<password>
 whereby both is base64encoded (to avoid special character issues).
 
@@ -28,11 +29,11 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 ### pressInfo
 
    Gives back basic information about present journals as needed by Salvia.
-   
+
 * **URL**
-   
+
   /pressinfo
- 
+
 * **Method:**
 
   `GET`
@@ -51,12 +52,12 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 
 * **Example Success Response:**
 
-  * **Code:** 200  
+  * **Code:** 200
 
   ```
-  {  
+  {
     "task": "pressinfo",
-    "success": true,  
+    "success": true,
     "warnings": ["a warning"],
     "data": {
         "test": {
@@ -64,13 +65,13 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
             "key": "test",
             "locales": ["en_US", "de_DE"]
         }
-    }    
-  } 
+    }
+  }
   ```
 
 * **Error Response:**
 
-  * **Code:** 404 (or else, depends)  
+  * **Code:** 404 (or else, depends)
 
   ```
   {
@@ -85,51 +86,51 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   ```
     /books/plugins/generic/ojs-cilantro-plugin/api/pressInfo
   ```
-  
+
 ### login
-  
+
      Can be used to test login credentials. Does nothing excpet for login.
-     
+
      Attention: As of OMP 3.1.1 appreantly not all information can be imported via XML.
      So it's not possible to automatically publish the imported books.
      A function for that could be designed.
-     
+
   * **URL**
-     
+
     /login
-   
+
   * **Method:**
-  
+
     `GET`
-  
+
   * **URL Params**
-  
+
     none
-  
+
   * **Data Params**
-  
+
     none
-  
+
   * **Authorization**
-  
+
     **Required**
-  
+
   * **Example Success Response:**
-  
-    * **Code:** 200  
-  
+
+    * **Code:** 200
+
     ```
-    {  
+    {
       "task": "login",
-      "success": true,  
-      "warnings": ["a warning"]  
-    } 
+      "success": true,
+      "warnings": ["a warning"]
+    }
     ```
-  
+
   * **Error Response:**
-  
+
     * **Code:** 401
-  
+
     ```
     {
       "success": false,
@@ -137,49 +138,48 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
       "warnings": ["a warning"]
     }
     ```
-  
+
   * **Sample Call:**
-  
+
     ```
       /books/plugins/generic/ojs-cilantro-plugin/api/login
     ```
-    
+
 ### import
-  
+
      Imports a Monograph
-     
+
   * **URL**
-     
+
     /import/:presscode
-   
+
   * **Method:**
-  
+
     `POST`
-  
+
   * **URL Params**
-  
+
     :presscode - the code of the press. We currently use only one press, which is called "dai"
-  
+
   * **Data Params**
-  
+
     none
-    
+
   * **POST Body**
-  
+
     Contains full OMP-Import-XML. (http://pkp.sfu.ca/ojs/dtds/2.4.8/native.dtd)
-    
     See example/example.xml
-  
+
   * **Authorization**
-  
+
     **Required**
-  
+
   * **Example Success Response:**
-  
-    * **Code:** 200  
-  
+
+    * **Code:** 200
+
     ```
-    {  
+    {
       "published_monographs": [
         "475",
         "476",
@@ -187,14 +187,14 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
       ],
       "task": "import",
       "success": true,
-      "warnings": ["a warning"]  
-    } 
+      "warnings": ["a warning"]
+    }
     ```
-  
+
   * **Example Error Response:**
-  
+
     * **Code:** 404
-  
+
     ```
     {
       "success": false,
@@ -202,42 +202,43 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
       "warnings": ["a warning"]
     }
     ```
-  
+
   * **Sample Call:**
-  
+
     ```
       /books/plugins/generic/import/dai
     ```
-    
+
 ### get zenon ids
 
 	retrieves a list fo all zenon-ids in the system with the links to the articles
-	
+
  * **URL**
-	 
+
 	/zenon
-   
+
   * **Method:**
-  
+
 	`GET`
-  
+
   * **URL Params**
-  
+
 	none
-  
+
   * **Data Params**
-  
+
 	none
-  
+
   * **Authorization**
-  
+
 	not required
-  
+
   * **Example Success Response:**
-  
-	* **Code:** 200  
-  
+
+	* **Code:** 200
+
 	```
+
 	{
 		"system": "omp 3.2.0.0",
 		"publications":{
@@ -249,9 +250,9 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 		"warnings":[]
 	}
 	```
-	
+
   * **Sample Call:**
-  
+
 	```
 	  /books/plugins/generic/ojs-cilantro-plugin/api/zenon
 	```

@@ -98,6 +98,18 @@ class cilantroConnectionApi extends server {
         $pressDao =& DAORegistry::getDAO('PressDAO');
 		$press = $pressDao->getByPath($pressPath);
         if (is_null($press)) {
+//=======
+//    private function _getNativeImportExportPlugin() {
+//		PluginRegistry::loadCategory('importexport', true, 0);
+//        $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
+//        return $nativeImportExportPlugin;
+//    }
+//
+//    private function _getJournal($journalPath) {
+//        $journalDao =& DAORegistry::getDAO('JournalDAO');
+//        $journal = $journalDao->getByPath($journalPath);
+//        if (is_null($journal)) {
+//>>>>>>> ojs3
             $this->returnCode = 404;
             throw new Exception("Journal $pressPath not found");
         }
@@ -166,6 +178,7 @@ class cilantroConnectionApi extends server {
 				"<<. He must have the role >>editor<< or >>manager<< for this journal.");
 		}
 
+
 		$doc = new DOMDocument();
 		$doc->loadXml($xml);
 
@@ -184,6 +197,7 @@ class cilantroConnectionApi extends server {
 			throw new Exception("Import failed: [$errno]" . $errstr);
 		}, E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING & ~E_NOTICE);
 
+
 		// catch xml errors
 		libxml_use_internal_errors(true);
 
@@ -192,6 +206,7 @@ class cilantroConnectionApi extends server {
 
 		// go
 		$nativeImportExportPlugin->importSubmissions($doc, $deployment);
+
 
 		// collect xml errors
 		$lastError = "";
@@ -276,7 +291,7 @@ class cilantroConnectionApi extends server {
 			} else {
 				$this->return['data'][$row['key']][$row['setting_name']] = $row['setting_value'];
 			}
-		}
+        }
     }
 
     function import() {
@@ -310,7 +325,6 @@ class cilantroConnectionApi extends server {
         return $user;
     }
 
-
 	function zenon() {
 		$dao = new DAO();
 		$url = Config::getVar('general', 'base_url') . '/index.php/';
@@ -336,8 +350,6 @@ class cilantroConnectionApi extends server {
 		$this->return["publications"] = $res->getAssoc();
 		$res->Close();
 	}
-
-
     function finish() {
 
     }
