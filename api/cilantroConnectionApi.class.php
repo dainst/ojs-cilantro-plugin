@@ -98,20 +98,8 @@ class cilantroConnectionApi extends server {
         $pressDao =& DAORegistry::getDAO('PressDAO');
 		$press = $pressDao->getByPath($pressPath);
         if (is_null($press)) {
-//=======
-//    private function _getNativeImportExportPlugin() {
-//		PluginRegistry::loadCategory('importexport', true, 0);
-//        $nativeImportExportPlugin = PluginRegistry::getPlugin('importexport', 'NativeImportExportPlugin');
-//        return $nativeImportExportPlugin;
-//    }
-//
-//    private function _getJournal($journalPath) {
-//        $journalDao =& DAORegistry::getDAO('JournalDAO');
-//        $journal = $journalDao->getByPath($journalPath);
-//        if (is_null($journal)) {
-//>>>>>>> ojs3
             $this->returnCode = 404;
-            throw new Exception("Journal $pressPath not found");
+            throw new Exception("Press $pressPath not found");
         }
         $this->log->debug("got press " . $press->getPageHeaderTitle() . " ($pressPath)");
         return $press;
