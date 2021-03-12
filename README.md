@@ -27,7 +27,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
 
 ### journalInfo
 
-   Gives back basic information about present journals as needed by Salvia.
+   Gives back basic information about present journals as needed.
    
 * **URL**
    
