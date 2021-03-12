@@ -4,9 +4,9 @@ Stellt eine einfache Web-API für OJS3 zur Verfügung, für diejenigen Funktione
 
 # Installation
 
-* got to <ojs>/plugins/generic
-* git clone <this>
-* cd <this>
+* go to <ojs>/plugins/generic
+* git clone <this> cilantro
+* cd cilantro
 * git submodule init
 * git submodule update
 
