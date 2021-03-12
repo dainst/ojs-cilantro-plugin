@@ -207,48 +207,12 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
       /import
     ```
 
-### get zenon ids
 
-	retrieves a list fo all zenon-ids in the system with the links to the articles
+### get zenon ids
+__deprecated__, moved into seperate plugin https://github.com/dainst/ojs-zenon-plugin.
+
+retrieves a list fo all zenon-ids in the system with the links to the articles
 	
  * **URL**
 	 
 	/zenon
-   
-  * **Method:**
-  
-	`GET`
-  
-  * **URL Params**
-  
-	none
-  
-  * **Data Params**
-  
-	none
-  
-  * **Authorization**
-  
-	not required
-  
-  * **Example Success Response:**
-  
-	* **Code:** 200  
-  
-	```
-	{		
-		"system":	"ojs2 3.2.0.0",
-		"publications": {	
-			"123456":	"http://localhost/ojs3/index.php/test2/article/view/35"
-		},
-		"task":		"zenon",
-		"success":	"true"
-		"warnings":	[]
-	}
-	```
-  
-  * **Sample Call:**
-  
-    ```
-      /zenon
-    ```
