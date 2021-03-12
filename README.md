@@ -12,7 +12,7 @@ Stellt eine einfache Web-API für OJS3 zur Verfügung, für diejenigen Funktione
 
 # API
 
-Every URL starts with <ojs-url>/plugins/generic/ojs-cilantro-plugin/api/
+Every URL starts with <ojs-url>/plugins/generic/cilantro/api/
 
 ## Authorization
 
