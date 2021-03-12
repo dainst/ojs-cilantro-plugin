@@ -204,7 +204,7 @@ Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
   * **Sample Call:**
   
     ```
-      /ojs-backup/plugins/generic/import/aa
+      {base OJS URL}/plugins/generic/cilantro/api/import
     ```
 
 ### get zenon ids
