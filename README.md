@@ -22,8 +22,13 @@ containg OJS-User and Password in the form
 <username>:<password>
 whereby both is base64encoded (to avoid special character issues).
 
-Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`
+Example: `bm9ib2R5:bm9wYXNzd29yZA==` means user `nobody` with pw `nopassword`, Linux commands example:
 
+```bash
+echo -n "nobody" | base64 -w 0
+echo -n "nopassword" | base64 -w 0
+```	
+	
 ## Endpoints
 
 ### pressInfo
